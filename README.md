@@ -75,13 +75,21 @@ docker images test-python
 ## 2. NiFi 접속
 
 **NiFi 2.x는 HTTP를 지원하지 않고 HTTPS(8443)만 사용합니다.**  
-Service를 NodePort로 두었으므로 포트 포워드 없이 접속합니다.
+Service는 ClusterIP이므로, Rancher Desktop의 **포트 포워드** 기능으로 로컬에서 접속합니다.
 
-1. 브라우저에서 **https://localhost:30443/nifi** 접속
-2. 자체 서명 인증서 경고 → **고급** → **localhost(으)로 이동** (또는 **계속**)
-3. 로그인: **admin** / **AdminPassword123**
+### 포트 포워드 설정 (Rancher Desktop)
 
-Rancher Desktop 단일 노드에서는 `localhost` + NodePort(30443)로 접속 가능합니다.  
+1. Rancher Desktop 메뉴에서 **Kubernetes** → **Port Forwarding** (또는 서비스 목록에서 **nifi** 선택)
+2. `nifi-system` 네임스페이스의 **nifi** 서비스에 대해 포트 포워드 추가  
+   - 로컬 포트: `8443` (또는 원하는 포트)  
+   - 원격 포트: `8443`
+3. 포트 포워드가 활성화되면 브라우저에서 **https://localhost:8443/nifi** 접속
+
+(또는 터미널에서 `kubectl port-forward -n nifi-system svc/nifi 8443:8443` 로 포워드한 뒤 동일하게 접속할 수 있습니다.)
+
+4. 자체 서명 인증서 경고 → **고급** → **localhost(으)로 이동** (또는 **계속**)
+5. 로그인: **admin** / **AdminPassword123**
+
 NiFi 기동에 2~3분 걸릴 수 있으므로 Pod가 Running이어도 잠시 기다린 뒤 접속하세요.
 
 ## 3. NiFi 플로우: Kubernetes API로 Pod 생성
