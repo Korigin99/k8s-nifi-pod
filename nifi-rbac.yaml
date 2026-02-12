@@ -1,0 +1,27 @@
+# NiFi ServiceAccount가 python-jobs 네임스페이스에 Pod 생성할 수 있도록 RBAC
+# containerd/k3s 표준 API 사용 (batch/v1 Job 대신 core/v1 Pod)
+# 적용: kubectl apply -f nifi-rbac.yaml
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nifi-role
+  namespace: python-jobs
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create", "get", "list", "watch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nifi-rolebinding
+  namespace: python-jobs
+subjects:
+- kind: ServiceAccount
+  name: nifi-sa
+  namespace: nifi-system
+roleRef:
+  kind: Role
+  name: nifi-role
+  apiGroup: rbac.authorization.k8s.io
