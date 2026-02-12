@@ -1,0 +1,26 @@
+{
+  "apiVersion": "v1",
+  "kind": "Pod",
+  "metadata": {
+    "name": "python-log-PLACEHOLDER",
+    "namespace": "python-jobs",
+    "labels": { "app": "python-log" }
+  },
+  "spec": {
+    "restartPolicy": "Never",
+    "containers": [
+      {
+        "name": "python-worker",
+        "image": "python:3.11-slim",
+        "command": ["python", "-c"],
+        "args": [
+          "import sys; from datetime import datetime; print('[python-pod] hello from k8s pod', datetime.now().isoformat(), flush=True); sys.exit(0)"
+        ],
+        "resources": {
+          "requests": { "memory": "128Mi", "cpu": "50m" },
+          "limits":   { "memory": "256Mi", "cpu": "200m" }
+        }
+      }
+    ]
+  }
+}
