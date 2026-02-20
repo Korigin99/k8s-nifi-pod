@@ -17,9 +17,10 @@ Rancher Desktop(k3s + containerd)에서는 **이미지를 미리 풀한 뒤** �
 ### 1.1 네임스페이스 적용
 
 ```powershell
-cd "d:\gwkim\000.가람파이프라인\test\k8s-nifi-pod"
+# 저장소 루트(k8s-nifi-pod)에서 실행
+# 예) cd "D:\path\to\k8s-nifi-pod"
 
-kubectl apply -f 00-namespaces.yaml
+kubectl apply -f .\k8s\00-namespaces.yaml
 ```
 
 ### 1.2 이미지 풀 (NiFi, Python)
@@ -41,12 +42,12 @@ kubectl delete pod img-pull-python -n python-jobs
 ### 1.3 NiFi 배포 및 RBAC 적용
 
 ```powershell
-kubectl apply -f nifi-rbac.yaml
-kubectl apply -f nifi-deployment.yaml
+kubectl apply -f .\k8s\nifi-rbac.yaml
+kubectl apply -f .\k8s\nifi-deployment.yaml
 ```
 
 이미지를 1.2에서 풀해 두었으면 NiFi Pod가 곧바로 `Running`이 됩니다.  
-1.2를 생략해도 됩니다. 이 경우 `nifi-deployment.yaml` 적용 시 k3s가 이미지를 그때 풀하며, NiFi Pod가 `ContainerCreating` 상태로 잠시 머무를 수 있습니다.
+1.2를 생략해도 됩니다. 이 경우 `k8s/nifi-deployment.yaml` 적용 시 k3s가 이미지를 그때 풀하며, NiFi Pod가 `ContainerCreating` 상태로 잠시 머무를 수 있습니다.
 
 ### 1.4 (선택) 로컬 테스트용 Python 이미지 빌드 → containerd에 올리기
 
@@ -58,7 +59,7 @@ kubectl apply -f nifi-deployment.yaml
 2. **이미지 빌드** (같은 containerd를 쓰는 k3s가 이 이미지를 사용합니다)
 
 ```powershell
-cd "d:\gwkim\000.가람파이프라인\test\k8s-nifi-pod\python"
+cd .\python
 docker build -t test-python:latest .
 ```
 
@@ -68,7 +69,7 @@ docker build -t test-python:latest .
 docker images test-python
 ```
 
-4. NiFi 플로우의 **Custom Text**에는 `python-pod-template.json` 대신 **`python-pod-template-local.json`** 내용을 넣습니다.  
+4. NiFi 플로우의 **Custom Text**에는 `templates/python-pod-template.json` 대신 **`templates/python-pod-template-local.json`** 내용을 넣습니다.  
    - 이미지: `test-python:latest`  
    - `imagePullPolicy: Never` → 레지스트리에서 안 받고 로컬(containerd) 이미지만 사용.
 
@@ -132,8 +133,8 @@ NiFi가 **클러스터 내부**에서 동작하므로 `https://kubernetes.defaul
 - **Unique FlowFiles**: `false` (Custom Text가 적용되려면 false여야 함)
 - **Custom Text**: 아래 JSON을 그대로 붙여넣기
 
-- **공개 이미지 사용**: `python-pod-template.json` 내용을 복사 (이미지: `python:3.11-slim`).
-- **로컬 테스트 이미지 사용** (1.4에서 빌드한 `test-python:latest`): `python-pod-template-local.json` 내용을 복사.
+- **공개 이미지 사용**: `templates/python-pod-template.json` 내용을 복사 (이미지: `python:3.11-slim`).
+- **로컬 테스트 이미지 사용** (1.4에서 빌드한 `test-python:latest`): `templates/python-pod-template-local.json` 내용을 복사.
 
 **PLACEHOLDER**는 그대로 두고 붙여넣습니다.  
 - **ReplaceText (NiFi 2.6.0)**: Replacement Strategy = **Literal Replace**, Search Value = `PLACEHOLDER`, Replacement Value = `${now():format('yyyyMMddHHmmss')}`.  
@@ -160,20 +161,20 @@ Pod 이름이 `python-log-<timestamp>` 형태라면 NiFi에서 생성된 것입�
 ## 5. 리소스 정리
 
 ```powershell
-kubectl delete -f nifi-deployment.yaml
-kubectl delete -f nifi-rbac.yaml
-kubectl delete -f 00-namespaces.yaml
+kubectl delete -f .\k8s\nifi-deployment.yaml
+kubectl delete -f .\k8s\nifi-rbac.yaml
+kubectl delete -f .\k8s\00-namespaces.yaml
 ```
 
 ## 파일 설명
 
 | 파일 | 용도 |
 |------|------|
-| `00-namespaces.yaml` | `nifi-system`, `python-jobs` 네임스페이스 |
-| `nifi-rbac.yaml` | NiFi SA가 `python-jobs`에 Pod create/get/list/watch/delete 할 수 있는 Role·RoleBinding |
-| `nifi-deployment.yaml` | NiFi Deployment, ServiceAccount, Service (containerd 표준 이미지) |
-| `python-pod-template.json` | NiFi에서 POST Body로 사용할 Pod 템플릿 (공개 이미지 `python:3.11-slim`) |
-| `python-pod-template-local.json` | 로컬 빌드 이미지 `test-python:latest`용 템플릿 (`imagePullPolicy: Never`) |
+| `k8s/00-namespaces.yaml` | `nifi-system`, `python-jobs` 네임스페이스 |
+| `k8s/nifi-rbac.yaml` | NiFi SA가 `python-jobs`에 Pod create/get/list/watch/delete 할 수 있는 Role·RoleBinding |
+| `k8s/nifi-deployment.yaml` | NiFi Deployment, ServiceAccount, Service (containerd 표준 이미지) |
+| `templates/python-pod-template.json` | NiFi에서 POST Body로 사용할 Pod 템플릿 (공개 이미지 `python:3.11-slim`) |
+| `templates/python-pod-template-local.json` | 로컬 빌드 이미지 `test-python:latest`용 템플릿 (`imagePullPolicy: Never`) |
 | `python/app.py` | 테스트용 스크립트 (`print("test")`) |
 | `python/Dockerfile` | 테스트 이미지 빌드용 (base: python:3.11-slim) |
 

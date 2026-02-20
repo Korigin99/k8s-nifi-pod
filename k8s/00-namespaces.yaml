@@ -1,5 +1,5 @@
 # Rancher Desktop(k3s) 테스트용 네임스페이스
-# 적용: kubectl apply -f 00-namespaces.yaml
+# 적용: kubectl apply -f .\k8s\00-namespaces.yaml
 ---
 apiVersion: v1
 kind: Namespace
