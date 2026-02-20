@@ -1,0 +1,7 @@
+# NiFi raw flow backups (local only)
+flows/private/*
+!flows/private/.gitkeep
+
+# Optional naming patterns for personal backups
+*NiFi_flow*.raw.json
+*NiFi_flow*.backup.json
